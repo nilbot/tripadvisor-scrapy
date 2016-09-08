@@ -107,3 +107,9 @@ ENV/
 pyvenv.cfg
 .venv
 pip-selfcheck.json
+
+# Created by https://www.gitignore.io/api/sublimetext
+
+# workspace files are user-specific
+*.sublime-project
+*.sublime-workspace
