@@ -18,7 +18,7 @@ LOG_LEVEL = 'ERROR'
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'tripadvisorCrawler (+http://www.yourdomain.com)'
 
-ITEM_PIPELINES = [
-    'tripadvisorCrawler.pipelines.TripadvisorcrawlerPipeline'
+ITEM_PIPELINES = {
+    'tripadvisorCrawler.pipelines.TripadvisorcrawlerPipeline':300,
 #    'myproject.pipeline.JsonWriterPipeline',
-]
+}
