@@ -1,5 +1,18 @@
-# How to Run:
+# Tripadvisor Crawler
 
+This project contains python source code to crawl hotel reviews for tripadvisor.ie
+
+## How to Run:
+
+### First time setup python with virtualenv
+```bash
+virtualenv --python=python2.7 .
+source bin/activate
+pip install -r requirements.txt
+```
+
+
+## Legacy Content
 1. From the terminal, go the the `scrapers/tripadvisor/tripadvisorCrawler` directory
 2. Run the following command:
     ```bash
