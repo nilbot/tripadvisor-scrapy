@@ -5,12 +5,25 @@ This project contains python source code to crawl hotel reviews for tripadvisor.
 ## How to Run:
 
 ### First time setup python with virtualenv
+
 ```bash
 virtualenv --python=python2.7 .
 source bin/activate
 pip install -r requirements.txt
 ```
 
+### Run Hotel URL scrapper
+```bash
+scrapy crawl hspider
+```
+
+### Run review scrapper
+```bash
+scrapy crawl taspider -a urls=result/urls.txt
+```
+
+### Warning
+as of 59d7be388bb1592b2f9b2e5ddc787ec6d3eacf5c the `urls.txt` and `*.jl` results are set to append mode. Do be careful running multiple times of crawler because the result will be appended instead of overwritten. It is advised at the moment that you manually checkpoint and save scrapped data to prevent duplicated result.
 
 ## Legacy Content
 1. From the terminal, go the the `scrapers/tripadvisor/tripadvisorCrawler` directory
