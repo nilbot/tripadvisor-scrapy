@@ -33,11 +33,7 @@ class HomeSpider(scrapy.Spider):
         baseurl = 'http://www.tripadvisor.ie'
         sel = Selector(response)
         # find next hotel list page
-        if HomeSpider.page_curr == 1:
-            nextlistLink = sel.xpath('//span[@class="pageNum first current"]/following-sibling::a[1]/@href').extract()
-            HomeSpider.page_curr += 1
-        else:
-            nextlistLink = sel.xpath('//span[@class="pageNum current"]/following-sibling::a[1]/@href').extract()
+        nextlistLink = sel.xpath('//span[starts-with(@class,"pageNum") and substring(@class, string-length(@class) - string-length("current") + 1)="current"]/following-sibling::a[1]/@href').extract()
 
         if len(nextlistLink) != 0:
             self.logger.info('NEXT HOTEL LIST PAGE LINK: {}'.format(nextlistLink[0]))
