@@ -113,3 +113,7 @@ pip-selfcheck.json
 # workspace files are user-specific
 *.sublime-project
 *.sublime-workspace
+
+# Local Json dump
+result/
+*.jl

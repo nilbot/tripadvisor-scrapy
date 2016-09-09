@@ -29,3 +29,7 @@ class ReviewItem(Item):
     site_name = Field()
     url = Field()
     batch_id = Field()
+
+class HotelURLItem(Item):
+    hotel_name = Field()
+    hotel_href = Field()

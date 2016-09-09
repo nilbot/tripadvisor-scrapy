@@ -2,12 +2,13 @@ __author__ = 'ruihaidong'
 
 import re
 import os
+import simplejson as json
 
 import scrapy
 from scrapy.selector import Selector
 from datetime import datetime
 
-from ..items import HotelItem, ReviewItem
+from ..items import HotelItem, ReviewItem, HotelURLItem
 
 def get_timestamp():
     import time
@@ -18,6 +19,46 @@ def get_timestamp():
 
 batch_id = get_timestamp()
 
+dublin_hotel_uri = "https://www.tripadvisor.ie/Hotels-g186605-Dublin_County_Dublin-Hotels.html"
+
+class HomeSpider(scrapy.Spider):
+    name = "hspider"
+    page_curr = 1
+
+    def __init__(self, *args, **kwargs):
+        super(HomeSpider,self).__init__(*args, **kwargs)
+        self.start_urls = [dublin_hotel_uri]
+
+    def parse(self, response):
+        baseurl = 'http://www.tripadvisor.ie'
+        sel = Selector(response)
+        # find next hotel list page
+        if HomeSpider.page_curr == 1:
+            nextlistLink = sel.xpath('//span[@class="pageNum first current"]/following-sibling::a[1]/@href').extract()
+            HomeSpider.page_curr += 1
+        else:
+            nextlistLink = sel.xpath('//span[@class="pageNum current"]/following-sibling::a[1]/@href').extract()
+
+        if len(nextlistLink) != 0:
+            self.logger.info('NEXT HOTEL LIST PAGE LINK: {}'.format(nextlistLink[0]))
+            request = scrapy.Request(baseurl + nextlistLink[0], callback=self.parse)
+            yield request
+
+        sel = Selector(response)
+        url_divs = sel.xpath('//div[@class="listing_title"]/a')
+        for div in url_divs:
+            hotel = HotelURLItem()
+            hotel['hotel_name'] = div.xpath('text()').extract()[0]
+            hotel['hotel_href'] = baseurl + div.xpath('@href').extract()[0]
+            yield hotel        
+
+def as_hotelurlitem(jsonItem):
+    if 'hotel_name' in jsonItem and 'hotel_href' in jsonItem:
+        res = HotelURLItem()
+        res['hotel_name'] = jsonItem['hotel_name']
+        res['hotel_href'] = jsonItem['hotel_href']
+        return res
+    return None
 
 class MySpider(scrapy.Spider):
     name = "taspider"
@@ -33,7 +74,8 @@ class MySpider(scrapy.Spider):
             raise IOError('Failed to find URLs file "{}"'.format(urls_file))
         else:
             with open(urls_file) as f:
-                self.start_urls = [url.strip() for url in f.readlines() if url.startswith('http://')]
+                jsonarray = [json.loads(url,object_hook=as_hotelurlitem) for url in f.readlines() if url.startswith('{')]
+                self.start_urls = [j['hotel_href'] for j in jsonarray if j['hotel_href']]
 
     def parse(self, response):
 
