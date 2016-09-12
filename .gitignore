@@ -117,3 +117,11 @@ pip-selfcheck.json
 # Local Json dump
 result/
 *.jl
+
+# Created by https://www.gitignore.io/api/visualstudiocode
+
+### VisualStudioCode ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
