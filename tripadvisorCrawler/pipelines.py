@@ -41,7 +41,7 @@ class TripadvisorcrawlerPipeline(object):
                     'review_title': item['review_title'],
                     'rating': item['rating'],
                     'rating_percentage':item['rating_percentage'],
-                    'rating_date': item['rating_date'],
+                    'timestamp_rating': item['timestamp_rating'],
                     'site_name': 'TripAdvisor',
                     'review_text': item['review_text'],
                     'url': item['url']}

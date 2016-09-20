@@ -24,7 +24,7 @@ class ReviewItem(Item):
     review_title = Field()
     rating = Field()
     rating_percentage=Field()
-    rating_date = Field()
+    timestamp_rating = Field()
     review_text = Field()
     site_name = Field()
     url = Field()

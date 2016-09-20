@@ -187,14 +187,14 @@ class MySpider(scrapy.Spider):
         if len(rid) > 0:
             item["review_id"] = rid[0]
 
-        item['rating_date'] = 'unknown'
+        item['timestamp_rating'] = 'unknown'
         ratingDateRe = re.compile(' content="([^\"]*)"')
         ratingDate = rnode.xpath('//descendant::span[@class="ratingDate" or @class="ratingDate relativeDate"]').re(
             ratingDateRe)
         if len(ratingDate) > 0:
             rating_date = datetime.strptime(ratingDate[0],'%Y-%m-%d').isoformat()
             self.logger.info(rating_date)
-            item['rating_date'] = rating_date
+            item['timestamp_rating'] = rating_date
             #item['rating_date'] = ratingDate[0]
 
         return item
