@@ -20,6 +20,9 @@ def get_timestamp():
 batch_id = get_timestamp()
 
 dublin_hotel_uri = "https://www.tripadvisor.ie/Hotels-g186605-Dublin_County_Dublin-Hotels.html"
+cork_hotel_uri = "https://www.tripadvisor.ie/Hotels-g186600-Cork_County_Cork-Hotels.html"
+galway_hotel_uri = "https://www.tripadvisor.ie/Hotels-g186609-Galway_County_Galway_Western_Ireland-Hotels.html"
+hotel_urls = [dublin_hotel_uri, cork_hotel_uri, galway_hotel_uri]
 
 class HomeSpider(scrapy.Spider):
     name = "hspider"
@@ -27,10 +30,10 @@ class HomeSpider(scrapy.Spider):
 
     def __init__(self, *args, **kwargs):
         super(HomeSpider,self).__init__(*args, **kwargs)
-        self.start_urls = [dublin_hotel_uri]
+        self.start_urls = hotel_urls
 
     def parse(self, response):
-        baseurl = 'http://www.tripadvisor.ie'
+        baseurl = 'https://www.tripadvisor.ie'
         sel = Selector(response)
         # find next hotel list page
         nextlistLink = sel.xpath('//span[starts-with(@class,"pageNum") and substring(@class, string-length(@class) - string-length("current") + 1)="current"]/following-sibling::a[1]/@href').extract()
@@ -74,13 +77,13 @@ class MySpider(scrapy.Spider):
                 self.start_urls = [j['hotel_href'] for j in jsonarray if j['hotel_href']]
 
     def parse(self, response):
-
+        city = get_city(response.request.url)
         # get Hotel information
         hxs = Selector(response)
         hitem = HotelItem()
         hitem['url'] = response.url
         hitem['batch_id'] = batch_id
-
+        hitem['city'] = city
         hitem['item_title'] = 'unknown'
         item_title = hxs.xpath('//*[@id="HEADING"]/text()').extract()
         if len(item_title) > 1:
@@ -94,7 +97,7 @@ class MySpider(scrapy.Spider):
             hitem['description'] = description[0]
 
         # use the part of url between .ie/ and .html as hotel_id
-        hotel_id = re.compile('http://www.tripadvisor\.([^/]*)/([^\.]*).html').match(response.url)
+        hotel_id = re.compile('https://www.tripadvisor\.([^/]*)/([^\.]*).html').match(response.url)
         if hotel_id:
             hitem['item_id'] = hotel_id.group(2)
         else:
@@ -109,7 +112,7 @@ class MySpider(scrapy.Spider):
 
     def parse_review_list(self, response):
 
-        baseurl = 'http://www.tripadvisor.ie'
+        baseurl = 'https://www.tripadvisor.ie'
 
         burem = bu = re.compile('(http[s]{0,1}://[^/]*)/').match(response.url)
         if burem:
@@ -198,3 +201,8 @@ class MySpider(scrapy.Spider):
             #item['rating_date'] = ratingDate[0]
 
         return item
+
+    def get_city(urlString):
+        base = "https://www.tripadvisor.ie"
+        found = re.search(base+'/\w+-g\d+-(?P<city>[a-z]+)_.*',urlString.lower())
+        return found.group('city')

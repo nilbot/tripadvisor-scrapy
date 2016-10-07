@@ -28,6 +28,7 @@ class TripadvisorcrawlerPipeline(object):
             data = {'item_id': item['item_id'],
                     'item_title': item['item_title'],
                     'description': item['description'],
+                    'city': item['city'],
                     'site_name': 'TripAdvisor',
                     'batch_id': item['batch_id'],
                     'url': item['url']}

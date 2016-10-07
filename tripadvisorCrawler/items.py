@@ -12,6 +12,7 @@ class HotelItem(Item):
     item_id = Field()
     item_title = Field()
     description = Field()
+    city = Field()
     site_name = Field()
     url = Field()
     batch_id = Field()
