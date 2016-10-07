@@ -49,7 +49,7 @@ class HomeSpider(scrapy.Spider):
             hotel = HotelURLItem()
             hotel['hotel_name'] = div.xpath('text()').extract()[0]
             hotel['hotel_href'] = baseurl + div.xpath('@href').extract()[0]
-            yield hotel        
+            yield hotel
 
 def as_hotelurlitem(jsonItem):
     if 'hotel_name' in jsonItem and 'hotel_href' in jsonItem:
@@ -77,7 +77,7 @@ class MySpider(scrapy.Spider):
                 self.start_urls = [j['hotel_href'] for j in jsonarray if j['hotel_href']]
 
     def parse(self, response):
-        city = get_city(response.request.url)
+        city = self.get_city(response.request.url)
         # get Hotel information
         hxs = Selector(response)
         hitem = HotelItem()
@@ -202,7 +202,11 @@ class MySpider(scrapy.Spider):
 
         return item
 
-    def get_city(urlString):
+    def get_city(self, urlString):
         base = "https://www.tripadvisor.ie"
-        found = re.search(base+'/\w+-g\d+-(?P<city>[a-z]+)_.*',urlString.lower())
+        regex = re.compile(base+'/.*-(?P<city>[a-z]+)_.*\.html')
+        found = regex.search(urlString.lower())
+        if found is None:
+            print('urlString is {}'.format(urlString.lower())) #self.logger.warning
+            return ''
         return found.group('city')
