@@ -16,6 +16,7 @@ class HotelItem(Item):
     site_name = Field()
     url = Field()
     batch_id = Field()
+    recommendation_list = Field()
 
 
 class ReviewItem(Item):
@@ -24,12 +25,13 @@ class ReviewItem(Item):
     review_id = Field()
     review_title = Field()
     rating = Field()
-    rating_percentage=Field()
+    rating_percentage = Field()
     timestamp_rating = Field()
     review_text = Field()
     site_name = Field()
     url = Field()
     batch_id = Field()
+
 
 class HotelURLItem(Item):
     hotel_name = Field()

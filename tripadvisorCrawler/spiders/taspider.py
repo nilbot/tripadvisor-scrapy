@@ -10,6 +10,7 @@ from datetime import datetime
 
 from ..items import HotelItem, ReviewItem, HotelURLItem
 
+
 def get_timestamp():
     import time
     # https://docs.python.org/2/library/time.html#time.strftime
@@ -24,23 +25,29 @@ cork_hotel_uri = "https://www.tripadvisor.ie/Hotels-g186600-Cork_County_Cork-Hot
 galway_hotel_uri = "https://www.tripadvisor.ie/Hotels-g186609-Galway_County_Galway_Western_Ireland-Hotels.html"
 hotel_urls = [dublin_hotel_uri, cork_hotel_uri, galway_hotel_uri]
 
+
 class HomeSpider(scrapy.Spider):
     name = "hspider"
     page_curr = 1
 
     def __init__(self, *args, **kwargs):
-        super(HomeSpider,self).__init__(*args, **kwargs)
-        self.start_urls = hotel_urls
+        super(HomeSpider, self).__init__(*args, **kwargs)
+        city = int(kwargs.get("city"))
+        self.start_urls = [hotel_urls[city]]
 
     def parse(self, response):
         baseurl = 'https://www.tripadvisor.ie'
         sel = Selector(response)
         # find next hotel list page
-        nextlistLink = sel.xpath('//span[starts-with(@class,"pageNum") and substring(@class, string-length(@class) - string-length("current") + 1)="current"]/following-sibling::a[1]/@href').extract()
+        nextlistLink = sel.xpath(
+            '//span[starts-with(@class,"pageNum") and substring(@class, string-length(@class) - string-length("current") + 1)="current"]/following-sibling::a[1]/@href'
+        ).extract()
 
         if len(nextlistLink) != 0:
-            self.logger.info('NEXT HOTEL LIST PAGE LINK: {}'.format(nextlistLink[0]))
-            request = scrapy.Request(baseurl + nextlistLink[0], callback=self.parse)
+            self.logger.info(
+                'NEXT HOTEL LIST PAGE LINK: {}'.format(nextlistLink[0]))
+            request = scrapy.Request(
+                baseurl + nextlistLink[0], callback=self.parse)
             yield request
 
         sel = Selector(response)
@@ -51,6 +58,7 @@ class HomeSpider(scrapy.Spider):
             hotel['hotel_href'] = baseurl + div.xpath('@href').extract()[0]
             yield hotel
 
+
 def as_hotelurlitem(jsonItem):
     if 'hotel_name' in jsonItem and 'hotel_href' in jsonItem:
         res = HotelURLItem()
@@ -58,6 +66,7 @@ def as_hotelurlitem(jsonItem):
         res['hotel_href'] = jsonItem['hotel_href']
         return res
     return None
+
 
 class MySpider(scrapy.Spider):
     name = "taspider"
@@ -73,8 +82,14 @@ class MySpider(scrapy.Spider):
             raise IOError('Failed to find URLs file "{}"'.format(urls_file))
         else:
             with open(urls_file) as f:
-                jsonarray = [json.loads(url,object_hook=as_hotelurlitem) for url in f.readlines() if url.startswith('{')]
-                self.start_urls = [j['hotel_href'] for j in jsonarray if j['hotel_href']]
+                jsonarray = [
+                    json.loads(
+                        url, object_hook=as_hotelurlitem)
+                    for url in f.readlines() if url.startswith('{')
+                ]
+                self.start_urls = [
+                    j['hotel_href'] for j in jsonarray if j['hotel_href']
+                ]
 
     def parse(self, response):
         city = self.get_city(response.request.url)
@@ -92,16 +107,23 @@ class MySpider(scrapy.Spider):
             hitem['item_title'] = item_title[0]
 
         hitem['description'] = 'unknown'
-        description = hxs.xpath('//meta[@name="description"]/@content').extract()
+        description = hxs.xpath(
+            '//meta[@name="description"]/@content').extract()
         if len(description) > 0:
             hitem['description'] = description[0]
 
         # use the part of url between .ie/ and .html as hotel_id
-        hotel_id = re.compile('https://www.tripadvisor\.([^/]*)/([^\.]*).html').match(response.url)
+        hotel_id = re.compile(
+            'https://www.tripadvisor\.([^/]*)/([^\.]*).html').match(
+                response.url)
         if hotel_id:
             hitem['item_id'] = hotel_id.group(2)
         else:
             hitem['item_id'] = response.url
+
+        recommendation_list = hxs.xpath(
+            '//div[@class="propertyLink"]').extract()
+        hitem['recommendation_list'] = recommendation_list
 
         yield hitem
 
@@ -120,17 +142,21 @@ class MySpider(scrapy.Spider):
 
         hxs = Selector(response)
         # find next review list page
-        nextlistLink = hxs.xpath('//span[@class="pageNum current"]/following-sibling::a[1]/@href').extract()
+        nextlistLink = hxs.xpath(
+            '//span[@class="pageNum current"]/following-sibling::a[1]/@href'
+        ).extract()
         item_id = response.meta['item_id']
 
         if len(nextlistLink) != 0:
             self.logger.info('NEXT PAGE LINK:' + nextlistLink[0])
-            request = scrapy.Request(baseurl + nextlistLink[0], callback=self.parse_review_list)
+            request = scrapy.Request(
+                baseurl + nextlistLink[0], callback=self.parse_review_list)
             request.meta['item_id'] = item_id
             yield request
 
         # for each review on the current review list page, to find review link and then to visit review page to get full review
-        reviewLinks = hxs.xpath('//div[@id="REVIEWS"]/descendant::a[span]/@href').extract()
+        reviewLinks = hxs.xpath(
+            '//div[@id="REVIEWS"]/descendant::a[span]/@href').extract()
 
         self.logger.info(len(reviewLinks))
 
@@ -138,7 +164,8 @@ class MySpider(scrapy.Spider):
             self.logger.info('REVIEW LINKS:' + rlink)
             item = ReviewItem()
             item['item_id'] = item_id
-            request = scrapy.Request(baseurl + rlink, callback=self.parse_review)
+            request = scrapy.Request(
+                baseurl + rlink, callback=self.parse_review)
             request.meta['item'] = item
             yield request
 
@@ -160,24 +187,29 @@ class MySpider(scrapy.Spider):
 
         item['rating'] = 'unknown'
         ratingRe = re.compile('alt="([0-5]) of 5 stars"')
-        rating = rnode.xpath('//descendant::span[@class="rate sprite-rating_s rating_s"]').re(ratingRe)
+        rating = rnode.xpath(
+            '//descendant::span[@class="rate sprite-rating_s rating_s"]').re(
+                ratingRe)
         if len(rating) > 0:
             item['rating'] = rating[0]
 
         if item['rating'] != 'unknown':
-            item['rating_percentage'] = str((float(item['rating'])-self.rmin)/(self.rmax-self.rmin))
+            item['rating_percentage'] = str(
+                (float(item['rating']) - self.rmin) / (self.rmax - self.rmin))
         else:
             item['rating_percentage'] = 'unknown'
 
         item['review_title'] = 'unknown'
-        reviewTitle = rnode.xpath('//descendant::div[@class="quote"]/text()').extract()
+        reviewTitle = rnode.xpath(
+            '//descendant::div[@class="quote"]/text()').extract()
         if len(reviewTitle) > 0:
             item['review_title'] = reviewTitle[0]
 
         item['user_id'] = 'unknown'
         # userIdRe = re.compile('user_name_name_click\'\)\">([^<]*)</span>')
         #userIdRe = re.compile('class=\"expand_inline scrname hvrIE6 mbrName_([^\"]*)\"')
-        userIdRe = re.compile('class=\"expand_inline scrname mbrName_([^\"]*)\"')
+        userIdRe = re.compile(
+            'class=\"expand_inline scrname mbrName_([^\"]*)\"')
 
         userId = rnode.xpath('//descendant::span').re(userIdRe)
         if userId:
@@ -192,10 +224,12 @@ class MySpider(scrapy.Spider):
 
         item['timestamp_rating'] = 'unknown'
         ratingDateRe = re.compile(' content="([^\"]*)"')
-        ratingDate = rnode.xpath('//descendant::span[@class="ratingDate" or @class="ratingDate relativeDate"]').re(
-            ratingDateRe)
+        ratingDate = rnode.xpath(
+            '//descendant::span[@class="ratingDate" or @class="ratingDate relativeDate"]'
+        ).re(ratingDateRe)
         if len(ratingDate) > 0:
-            rating_date = datetime.strptime(ratingDate[0],'%Y-%m-%d').isoformat()
+            rating_date = datetime.strptime(ratingDate[0],
+                                            '%Y-%m-%d').isoformat()
             self.logger.info(rating_date)
             item['timestamp_rating'] = rating_date
             #item['rating_date'] = ratingDate[0]
@@ -204,9 +238,10 @@ class MySpider(scrapy.Spider):
 
     def get_city(self, urlString):
         base = "https://www.tripadvisor.ie"
-        regex = re.compile(base+'/.*-(?P<city>[a-z]+)_.*\.html')
+        regex = re.compile(base + '/.*-(?P<city>[a-z]+)_.*\.html')
         found = regex.search(urlString.lower())
         if found is None:
-            print('urlString is {}'.format(urlString.lower())) #self.logger.warning
+            print('urlString is {}'.format(
+                urlString.lower()))  #self.logger.warning
             return ''
         return found.group('city')
