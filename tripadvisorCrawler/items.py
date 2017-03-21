@@ -17,6 +17,7 @@ class HotelItem(Item):
     url = Field()
     batch_id = Field()
     recommendation_list = Field()
+    num_rooms = Field()
 
 
 class ReviewItem(Item):

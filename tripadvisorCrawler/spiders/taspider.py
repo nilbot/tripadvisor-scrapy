@@ -125,6 +125,13 @@ class MySpider(scrapy.Spider):
             '//div[@class="propertyLink"]').extract()
         hitem['recommendation_list'] = recommendation_list
 
+        num_rooms = hxs.xpath(
+            '//span[@class="tabs_num_rooms"]/text()').extract()
+        if len(num_rooms) > 0:
+            hitem['num_rooms'] = num_rooms[0]
+        else:
+            hitem['num_rooms'] = 0
+
         yield hitem
 
         # getReviews
@@ -186,7 +193,7 @@ class MySpider(scrapy.Spider):
             item["review_text"] = rtext[0]
 
         item['rating'] = 'unknown'
-        ratingRe = re.compile('alt="([0-5]) of 5 stars"')
+        ratingRe = re.compile('alt="([0-5]) of 5 bubbles"')
         rating = rnode.xpath(
             '//descendant::span[@class="rate sprite-rating_s rating_s"]').re(
                 ratingRe)

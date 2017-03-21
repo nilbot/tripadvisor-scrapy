@@ -34,6 +34,7 @@ class TripadvisorcrawlerPipeline(object):
                 'site_name': 'TripAdvisor',
                 'batch_id': item['batch_id'],
                 'recommendation_list': item['recommendation_list'],
+                'num_rooms': item['num_rooms'],
                 'url': item['url']
             }
             line = json.dumps(dict(data)) + "\n"
